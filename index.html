@@ -129,6 +129,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 16px;
+      cursor: pointer;
       transition: border-color 0.2s, transform 0.15s;
     }
     .project-card:hover { border-color: var(--purple-main); transform: translateY(-2px); }
@@ -332,7 +333,8 @@ const DEFAULTS = {
 // ═══════════════════════════════════════════════
 let data       = loadData();
 let openStates = {};       // milestoneId → boolean
-let editingMid = null;     // which milestone to add project into
+let editingMid = null;
+let editingPid = null;
 
 function loadData() {
   try {
@@ -348,7 +350,7 @@ function persist() {
 
 function msProgress(m) {
   if (!m.projects.length) return 0;
-  return Math.round(m.projects.reduce((s,p) => s + p.progress, 0) / m.projects.length);
+  return Math.round(m.projects.filter(p => p.status === 'done').length / m.projects.length * 100);
 }
 
 // ═══════════════════════════════════════════════
@@ -380,7 +382,7 @@ function renderMilestones() {
       const pct   = msProgress(m);
       const open  = openStates[m.id] ? ' open' : '';
       const cards = m.projects.length
-        ? m.projects.map(renderProject).join('')
+        ? m.projects.map(p => renderProject(p, m.id)).join('')
         : `<p class="empty">ยังไม่มีโปรเจกต์ — กดปุ่มด้านล่างเพิ่มได้เลย</p>`;
       return `
         <div class="milestone-card${open}" id="mc-${m.id}">
@@ -404,11 +406,11 @@ function renderMilestones() {
     }).join('');
 }
 
-function renderProject(p) {
+function renderProject(p, milestoneId) {
   const labels = { todo:'รอทำ', doing:'กำลังทำ', done:'เสร็จแล้ว' };
   const tags   = p.tags.map(t => `<span class="tag">${t}</span>`).join('');
   return `
-    <div class="project-card">
+    <div class="project-card" onclick="openEditModal('${milestoneId}','${p.id}')">
       <div class="proj-top">
         <div class="proj-name">${p.name}</div>
         <span class="badge badge-${p.status}">${labels[p.status]}</span>
@@ -437,6 +439,8 @@ function toggle(id) {
 // ═══════════════════════════════════════════════
 function openModal(milestoneId) {
   editingMid = milestoneId;
+  editingPid = null;
+  document.getElementById('modalTitle').textContent = 'เพิ่ม Project ใหม่';
   document.getElementById('iName').value     = '';
   document.getElementById('iStatus').value   = 'todo';
   document.getElementById('iTags').value     = '';
@@ -447,34 +451,51 @@ function openModal(milestoneId) {
   setTimeout(() => document.getElementById('iName').focus(), 50);
 }
 
+function openEditModal(milestoneId, projectId) {
+  const ms = data.milestones.find(m => m.id === milestoneId);
+  const p  = ms && ms.projects.find(p => p.id === projectId);
+  if (!p) return;
+  editingMid = milestoneId;
+  editingPid = projectId;
+  document.getElementById('modalTitle').textContent = 'แก้ไข Project';
+  document.getElementById('iName').value     = p.name;
+  document.getElementById('iStatus').value   = p.status;
+  document.getElementById('iTags').value     = p.tags.join(', ');
+  document.getElementById('iProgress').value = p.progress;
+  document.getElementById('iProgressVal').textContent = p.progress + '%';
+  document.getElementById('iNote').value     = p.note || '';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('iName').focus(), 50);
+}
+
 function closeModal() {
   document.getElementById('overlay').classList.remove('open');
   editingMid = null;
+  editingPid = null;
 }
 
 function saveProject() {
   const name = document.getElementById('iName').value.trim();
   if (!name) { document.getElementById('iName').focus(); return; }
 
-  const tags = document.getElementById('iTags').value
-    .split(',').map(t => t.trim()).filter(Boolean);
-
-  const proj = {
-    id:       'p' + Date.now(),
-    name,
-    status:   document.getElementById('iStatus').value,
-    tags,
-    progress: +document.getElementById('iProgress').value,
-    note:     document.getElementById('iNote').value.trim()
-  };
+  const tags     = document.getElementById('iTags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const status   = document.getElementById('iStatus').value;
+  const progress = +document.getElementById('iProgress').value;
+  const note     = document.getElementById('iNote').value.trim();
 
   const ms = data.milestones.find(m => m.id === editingMid);
-  if (ms) {
-    ms.projects.push(proj);
-    persist();
-    openStates[editingMid] = true;
-    render();
+  if (!ms) { closeModal(); return; }
+
+  if (editingPid) {
+    const p = ms.projects.find(p => p.id === editingPid);
+    if (p) Object.assign(p, { name, status, tags, progress, note });
+  } else {
+    ms.projects.push({ id: 'p' + Date.now(), name, status, tags, progress, note });
   }
+
+  persist();
+  openStates[editingMid] = true;
+  render();
   closeModal();
 }
 
