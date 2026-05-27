@@ -235,6 +235,20 @@
     .btn-secondary { background: var(--bg-input); color: var(--text-sec); border: 1px solid var(--border); }
     .btn-secondary:hover { color: var(--text-primary); }
 
+    /* ── Add Milestone button ────────────────────── */
+    .add-milestone-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px;
+      background: transparent;
+      border: 1.5px dashed var(--purple-dim);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer; font-size: 0.9rem; font-family: inherit;
+      transition: all 0.2s;
+      margin-bottom: 18px;
+    }
+    .add-milestone-btn:hover { border-color: var(--purple-main); color: var(--purple-light); background: rgba(127,119,221,.05); }
+
     /* ── Empty state ─────────────────────────────── */
     .empty { color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 12px 0 4px; }
   </style>
@@ -247,6 +261,7 @@
   </header>
 
   <div class="stats-strip" id="statsStrip"></div>
+  <button class="add-milestone-btn" onclick="openMilestoneModal()">＋ เพิ่ม Milestone ใหม่</button>
   <div id="milestoneList"></div>
 </div>
 
@@ -285,6 +300,25 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
       <button class="btn btn-primary"   onclick="saveProject()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Milestone Modal -->
+<div class="overlay" id="overlayMs">
+  <div class="modal">
+    <h2>เพิ่ม Milestone ใหม่</h2>
+    <div class="fg">
+      <label>ชื่อ Milestone *</label>
+      <input id="msName" type="text" placeholder="เช่น พร้อมรับงาน Freelance" />
+    </div>
+    <div class="fg">
+      <label>คำอธิบายสั้น</label>
+      <input id="msSubtitle" type="text" placeholder="เช่น Portfolio · Profile · First Client" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeMilestoneModal()">ยกเลิก</button>
+      <button class="btn btn-primary"   onclick="saveMilestone()">บันทึก</button>
     </div>
   </div>
 </div>
@@ -502,6 +536,40 @@ function saveProject() {
 // Close on backdrop click
 document.getElementById('overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('overlay')) closeModal();
+});
+document.getElementById('overlayMs').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlayMs')) closeMilestoneModal();
+});
+
+// ═══════════════════════════════════════════════
+//  MILESTONE MODAL
+// ═══════════════════════════════════════════════
+const MS_ICONS = ['🎯','⭐','🚀','💡','🔥','✨','🛠️','📌'];
+
+function openMilestoneModal() {
+  document.getElementById('msName').value     = '';
+  document.getElementById('msSubtitle').value = '';
+  document.getElementById('overlayMs').classList.add('open');
+  setTimeout(() => document.getElementById('msName').focus(), 50);
+}
+
+function closeMilestoneModal() {
+  document.getElementById('overlayMs').classList.remove('open');
+}
+
+function saveMilestone() {
+  const title = document.getElementById('msName').value.trim();
+  if (!title) { document.getElementById('msName').focus(); return; }
+  const subtitle = document.getElementById('msSubtitle').value.trim();
+  const icon     = MS_ICONS[data.milestones.length % MS_ICONS.length];
+  data.milestones.push({ id: 'm' + Date.now(), icon, title, subtitle, projects: [] });
+  persist();
+  render();
+  closeMilestoneModal();
+}
+
+document.getElementById('msName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveMilestone();
 });
 
 // Enter key in name field
