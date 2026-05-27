@@ -249,6 +249,17 @@
     }
     .add-milestone-btn:hover { border-color: var(--purple-main); color: var(--purple-light); background: rgba(127,119,221,.05); }
 
+    /* ── Version tag ─────────────────────────────── */
+    .version-tag {
+      position: fixed;
+      bottom: 14px; right: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.4;
+      pointer-events: none;
+      letter-spacing: 0.3px;
+    }
+
     /* ── Empty state ─────────────────────────────── */
     .empty { color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 12px 0 4px; }
   </style>
@@ -303,6 +314,8 @@
     </div>
   </div>
 </div>
+
+<div class="version-tag">v1.2 · อัปเดต 27 พ.ค. 2569</div>
 
 <!-- Milestone Modal -->
 <div class="overlay" id="overlayMs">
