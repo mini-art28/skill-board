@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Board</title>
+  <style>
+    :root {
+      --purple-main:  #7F77DD;
+      --purple-light: #9B95E8;
+      --purple-dark:  #5A52B5;
+      --purple-dim:   #3D3880;
+      --bg-base:      #0F0E1A;
+      --bg-card:      #1A1830;
+      --bg-card2:     #221F3A;
+      --bg-input:     #2A2648;
+      --text-primary: #E8E6FF;
+      --text-sec:     #9B99BB;
+      --text-muted:   #6B69A0;
+      --border:       #2E2A50;
+      --green:        #4CAF50;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 28px 16px 60px;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header { text-align: center; margin-bottom: 36px; }
+    header h1 {
+      font-size: 2rem; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--purple-light), #C4C0FF);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    header p { color: var(--text-sec); margin-top: 7px; font-size: 0.93rem; }
+
+    .container { max-width: 920px; margin: 0 auto; }
+
+    /* ── Stats strip ─────────────────────────────── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    @media (max-width: 540px) { .stats-strip { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-number { font-size: 1.7rem; font-weight: 700; color: var(--purple-light); }
+    .stat-label  { font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── Milestone card ──────────────────────────── */
+    .milestone-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .milestone-card:hover { border-color: var(--purple-dim); }
+
+    .milestone-header {
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      user-select: none;
+    }
+
+    .ms-icon {
+      width: 46px; height: 46px;
+      border-radius: 10px;
+      background: var(--purple-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+
+    .ms-info { flex: 1; }
+    .ms-title    { font-size: 1.05rem; font-weight: 600; }
+    .ms-subtitle { font-size: 0.8rem; color: var(--text-sec); margin-top: 3px; }
+
+    .ms-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+    .ms-pct   { font-size: 1.25rem; font-weight: 700; color: var(--purple-light); }
+
+    .prog-wrap { width: 120px; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+    .prog-fill  {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple-dark), var(--purple-light));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .chevron { color: var(--text-muted); font-size: 1rem; margin-left: 10px; transition: transform 0.25s; }
+    .milestone-card.open .chevron { transform: rotate(180deg); }
+
+    /* ── Projects section ────────────────────────── */
+    .projects-section { display: none; padding: 0 20px 20px; }
+    .milestone-card.open .projects-section { display: block; }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      gap: 13px;
+      margin-bottom: 13px;
+    }
+
+    /* ── Project card ────────────────────────────── */
+    .project-card {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .project-card:hover { border-color: var(--purple-main); transform: translateY(-2px); }
+
+    .proj-top {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 9px;
+    }
+    .proj-name { font-size: 0.93rem; font-weight: 600; flex: 1; line-height: 1.35; }
+
+    .badge {
+      font-size: 0.68rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+      white-space: nowrap; margin-left: 8px; flex-shrink: 0;
+    }
+    .badge-todo  { background: rgba(107,105,160,.2); color: var(--text-muted); }
+    .badge-doing { background: rgba(127,119,221,.2); color: var(--purple-light); }
+    .badge-done  { background: rgba(76,175,80,.15);  color: #81C784; }
+
+    .proj-note { font-size: 0.79rem; color: var(--text-sec); margin-bottom: 10px; line-height: 1.45; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+    .tag {
+      font-size: 0.7rem;
+      background: rgba(127,119,221,.13);
+      color: var(--purple-light);
+      border: 1px solid rgba(127,119,221,.22);
+      padding: 2px 8px; border-radius: 20px;
+    }
+
+    .proj-prog-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.74rem; color: var(--text-muted); margin-bottom: 5px;
+    }
+    .proj-prog-bar { height: 4px; background: var(--bg-input); border-radius: 2px; overflow: hidden; }
+    .proj-prog-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+    .fill-todo  { background: var(--text-muted); }
+    .fill-doing { background: linear-gradient(90deg, var(--purple-dark), var(--purple-light)); }
+    .fill-done  { background: var(--green); }
+
+    /* ── Add button ──────────────────────────────── */
+    .add-btn {
+      width: 100%; padding: 10px;
+      background: transparent;
+      border: 1.5px dashed var(--purple-dim);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer; font-size: 0.87rem;
+      transition: all 0.2s;
+    }
+    .add-btn:hover { border-color: var(--purple-main); color: var(--purple-light); background: rgba(127,119,221,.05); }
+
+    /* ── Modal ───────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,9,20,.82);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%; max-width: 450px;
+      animation: up .2s ease;
+    }
+    @keyframes up { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    .modal h2 { font-size: 1.05rem; font-weight: 700; color: var(--purple-light); margin-bottom: 22px; }
+
+    .fg { margin-bottom: 15px; }
+    .fg label { display: block; font-size: 0.8rem; color: var(--text-sec); margin-bottom: 6px; font-weight: 500; }
+
+    .fg input,
+    .fg select,
+    .fg textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      font-size: 0.88rem; font-family: inherit;
+      outline: none; transition: border-color .2s;
+    }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--purple-main); }
+    .fg textarea { resize: vertical; min-height: 70px; }
+    .fg select option { background: var(--bg-card2); }
+
+    .range-row { display: flex; align-items: center; gap: 10px; }
+    .range-row input[type=range] { flex: 1; accent-color: var(--purple-main); cursor: pointer; }
+    .range-val { font-size: 0.88rem; font-weight: 700; color: var(--purple-light); min-width: 36px; text-align: right; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+    .btn-primary   { background: var(--purple-main); color: #fff; }
+    .btn-primary:hover { background: var(--purple-light); }
+    .btn-secondary { background: var(--bg-input); color: var(--text-sec); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text-primary); }
+
+    /* ── Empty state ─────────────────────────────── */
+    .empty { color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 12px 0 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ Skill Board</h1>
+    <p>ติดตามทักษะ · สร้างรายได้ · เดินหน้าทุกวัน</p>
+  </header>
+
+  <div class="stats-strip" id="statsStrip"></div>
+  <div id="milestoneList"></div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">เพิ่ม Project ใหม่</h2>
+    <div class="fg">
+      <label>ชื่อ Project *</label>
+      <input id="iName" type="text" placeholder="เช่น Portfolio Website" />
+    </div>
+    <div class="fg">
+      <label>สถานะ</label>
+      <select id="iStatus">
+        <option value="todo">รอทำ</option>
+        <option value="doing">กำลังทำ</option>
+        <option value="done">เสร็จแล้ว</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Skill Tags (คั่นด้วย ,)</label>
+      <input id="iTags" type="text" placeholder="เช่น HTML, CSS, Figma" />
+    </div>
+    <div class="fg">
+      <label>ความคืบหน้า</label>
+      <div class="range-row">
+        <input id="iProgress" type="range" min="0" max="100" value="0"
+          oninput="document.getElementById('iProgressVal').textContent=this.value+'%'" />
+        <span class="range-val" id="iProgressVal">0%</span>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Note</label>
+      <textarea id="iNote" placeholder="โน้ตสั้นๆ เป้าหมาย หรือสิ่งที่ต้องทำ"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary"   onclick="saveProject()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DEFAULT DATA
+// ═══════════════════════════════════════════════
+const DEFAULTS = {
+  milestones: [
+    {
+      id: 'm1', icon: '📦',
+      title: 'พร้อมรับงาน Freelance 3D',
+      subtitle: 'Asset Pack · ArtStation · Fab.com · Fiverr',
+      projects: [
+        { id:'p1', name:'สร้าง Personal Asset Pack (prop/environment 3-5 ชิ้น)', status:'todo', tags:['Blender','Substance Painter','3D'],   progress:0, note:'' },
+        { id:'p2', name:'ตั้ง ArtStation Profile + อัป asset ใหม่',              status:'todo', tags:['ArtStation','Portfolio'],             progress:0, note:'⚠️ งานจากบริษัทเก่า — แนบได้เฉพาะ offline หรือ private link' },
+        { id:'p3', name:'ลิสต์ขายใน Fab.com',                                   status:'todo', tags:['Fab.com','Asset Store'],              progress:0, note:'' },
+        { id:'p4', name:'เขียน Fiverr / Upwork Profile',                         status:'todo', tags:['Fiverr','Upwork','Freelance'],         progress:0, note:'' }
+      ]
+    },
+    {
+      id: 'm2', icon: '🤖',
+      title: 'UX + AI Combo',
+      subtitle: 'Research · Figma · Claude',
+      projects: [
+        { id:'p5', name:'ดู ref และเก็บ pattern UX/UI 30 วัน',      status:'todo', tags:['UX','UI','Research'],       progress:0, note:'' },
+        { id:'p6', name:'ทำ wireframe ชิ้นแรกด้วย Figma + Claude',  status:'todo', tags:['Figma','Claude','Wireframe'], progress:0, note:'' }
+      ]
+    },
+    {
+      id: 'm3', icon: '🎮',
+      title: 'Solo Game v1 (Unreal)',
+      subtitle: 'Blueprint · Mechanic · SFX',
+      projects: [
+        { id:'p7', name:'เรียน Blueprint พื้นฐาน',          status:'todo', tags:['Unreal','Blueprint'],  progress:0, note:'' },
+        { id:'p8', name:'ทำ mechanic เดียวให้เล่นได้จริง', status:'todo', tags:['Unreal','Game Dev'],   progress:0, note:'' },
+        { id:'p9', name:'ใส่ SFX เบื้องต้น',               status:'todo', tags:['Unreal','SFX','Audio'], progress:0, note:'' }
+      ]
+    }
+  ]
+};
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let data       = loadData();
+let openStates = {};       // milestoneId → boolean
+let editingMid = null;     // which milestone to add project into
+
+function loadData() {
+  try {
+    const s = localStorage.getItem('skillboard_v3');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+
+function persist() {
+  localStorage.setItem('skillboard_v3', JSON.stringify(data));
+}
+
+function msProgress(m) {
+  if (!m.projects.length) return 0;
+  return Math.round(m.projects.reduce((s,p) => s + p.progress, 0) / m.projects.length);
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  renderStats();
+  renderMilestones();
+}
+
+function renderStats() {
+  const all = data.milestones.flatMap(m => m.projects);
+  const avgPct = all.length
+    ? Math.round(all.reduce((s,p) => s + p.progress, 0) / all.length) + '%'
+    : '0%';
+  const items = [
+    { n: all.length,                                     l: 'โปรเจกต์ทั้งหมด' },
+    { n: all.filter(p => p.status === 'doing').length,   l: 'กำลังทำ' },
+    { n: all.filter(p => p.status === 'done').length,    l: 'เสร็จแล้ว' },
+    { n: avgPct,                                         l: 'ความคืบหน้ารวม' }
+  ];
+  document.getElementById('statsStrip').innerHTML =
+    items.map(i => `<div class="stat-box"><div class="stat-number">${i.n}</div><div class="stat-label">${i.l}</div></div>`).join('');
+}
+
+function renderMilestones() {
+  document.getElementById('milestoneList').innerHTML =
+    data.milestones.map(m => {
+      const pct   = msProgress(m);
+      const open  = openStates[m.id] ? ' open' : '';
+      const cards = m.projects.length
+        ? m.projects.map(renderProject).join('')
+        : `<p class="empty">ยังไม่มีโปรเจกต์ — กดปุ่มด้านล่างเพิ่มได้เลย</p>`;
+      return `
+        <div class="milestone-card${open}" id="mc-${m.id}">
+          <div class="milestone-header" onclick="toggle('${m.id}')">
+            <div class="ms-icon">${m.icon}</div>
+            <div class="ms-info">
+              <div class="ms-title">${m.title}</div>
+              <div class="ms-subtitle">${m.subtitle}</div>
+            </div>
+            <div class="ms-right">
+              <div class="ms-pct">${pct}%</div>
+              <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div class="chevron">▼</div>
+          </div>
+          <div class="projects-section">
+            <div class="projects-grid">${cards}</div>
+            <button class="add-btn" onclick="openModal('${m.id}')">＋ เพิ่ม Project ใหม่</button>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+function renderProject(p) {
+  const labels = { todo:'รอทำ', doing:'กำลังทำ', done:'เสร็จแล้ว' };
+  const tags   = p.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  return `
+    <div class="project-card">
+      <div class="proj-top">
+        <div class="proj-name">${p.name}</div>
+        <span class="badge badge-${p.status}">${labels[p.status]}</span>
+      </div>
+      ${p.note ? `<div class="proj-note">${p.note}</div>` : ''}
+      ${tags   ? `<div class="tags">${tags}</div>` : ''}
+      <div class="proj-prog-label"><span>ความคืบหน้า</span><span>${p.progress}%</span></div>
+      <div class="proj-prog-bar">
+        <div class="proj-prog-fill fill-${p.status}" style="width:${p.progress}%"></div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  TOGGLE MILESTONE
+// ═══════════════════════════════════════════════
+function toggle(id) {
+  openStates[id] = !openStates[id];
+  const card = document.getElementById('mc-' + id);
+  card.classList.toggle('open', !!openStates[id]);
+  // update chevron without full re-render (performance)
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════
+function openModal(milestoneId) {
+  editingMid = milestoneId;
+  document.getElementById('iName').value     = '';
+  document.getElementById('iStatus').value   = 'todo';
+  document.getElementById('iTags').value     = '';
+  document.getElementById('iProgress').value = 0;
+  document.getElementById('iProgressVal').textContent = '0%';
+  document.getElementById('iNote').value     = '';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('iName').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  editingMid = null;
+}
+
+function saveProject() {
+  const name = document.getElementById('iName').value.trim();
+  if (!name) { document.getElementById('iName').focus(); return; }
+
+  const tags = document.getElementById('iTags').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+
+  const proj = {
+    id:       'p' + Date.now(),
+    name,
+    status:   document.getElementById('iStatus').value,
+    tags,
+    progress: +document.getElementById('iProgress').value,
+    note:     document.getElementById('iNote').value.trim()
+  };
+
+  const ms = data.milestones.find(m => m.id === editingMid);
+  if (ms) {
+    ms.projects.push(proj);
+    persist();
+    openStates[editingMid] = true;
+    render();
+  }
+  closeModal();
+}
+
+// Close on backdrop click
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+
+// Enter key in name field
+document.getElementById('iName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveProject();
+});
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
